@@ -7,6 +7,8 @@ import com.lambdaworks.jacks.JacksMapper
 import org.apache.spark.SparkContext._
 import org.apache.spark.{SparkConf, SparkContext}
 
+import scala.collection.mutable
+
 object Task1Solution {
 
   def cleanData(line: String) = {
@@ -27,8 +29,13 @@ object Task1Solution {
     else if (data.contains("craetedAt"))
       createdAtKey = "createdAt"
 
-    if (data.contains("payload") && data.get("payload").get.asInstanceOf[Map[String, Object]].contains("itemID"))
-      itemIdKey = "itemId"
+    if (data.contains("payload")) {
+      val payload = data.get("payload").get.asInstanceOf[Map[String, Object]]
+      if (payload.contains("itemId"))
+        itemIdKey = "itemId"
+      else if (payload.contains("itemID"))
+        itemIdKey = "itemID"
+    }
 
     val userId = data.get("user").get
     val sessionId = data.get(sessionIdKey).get
@@ -101,6 +108,17 @@ object Task1Solution {
     seq
   }
 
+  def merge[K, V](maps: Seq[Map[K, V]])(f: (K, V, V) => V): Map[K, V] = {
+    maps.foldLeft(Map.empty[K, V]) { case (merged, m) =>
+      m.foldLeft(merged) { case (acc, (k, v)) =>
+        acc.get(k) match {
+          case Some(existing) => acc.updated(k, f(k, existing, v))
+          case None => acc.updated(k, v)
+        }
+      }
+    }
+  }
+
   case class Session(popular: Option[String] = None, recommended: Option[String] = None,
                      searched: Option[String] = None, hover: Option[String] = None,
                      queued: Option[String] = None, browsed: Option[String] = None,
@@ -124,19 +142,76 @@ object Task1Solution {
     //      .reduceByKey(_ + _).sortByKey().foreach(println)
 
     // 1. Clean data
-//    lines.flatMap(cleanData).saveAsTextFile(workDir + "/cleaned")
+    lines.flatMap(cleanData).saveAsTextFile(workDir + "/cleaned")
 
     val cleaned = sc.textFile(workDir + "/cleaned/part-00000")
       .map({ line =>
         val parts = line.split("\t")
         val keyParts = parts(0).split(",")
 
-        (keyParts(0) + ":" + keyParts(2), (keyParts(1).toLong, keyParts(1).toLong, parts(1)))
+        val parseData = {
+          val data = mutable.HashMap[String, Seq[String]]()
+          val dataParts = parts(1).split(":")
+
+          if (dataParts.length > 1) {
+            val items = dataParts(1).split(",")
+            dataParts(0) match {
+              case "C" =>
+                data.put("recommendations", items.toSeq)
+              case "P" =>
+                data.put("popular", items.toSeq)
+              case "R" =>
+                data.put("recommended", items.toSeq)
+              case "S" =>
+                data.put("searched", items.toSeq)
+              case "p" =>
+                data.put("played", Array(items.mkString(":")))
+              case "a" =>
+                data.put("queued", items.toSeq)
+              case "c" =>
+                data.put("actions", items.toSeq)
+                data.put("kid", Array(false.toString))
+              case "h" =>
+                data.put("hover", items.toSeq)
+              case "i" =>
+                data.put("browsed", items.toSeq)
+              case "r" =>
+                data.put("recent", items.toSeq)
+              case "t" =>
+                data.put("rated", Array(items.mkString(":")))
+              case "w" =>
+                data.put("reviewed", Array(items.mkString(":")))
+              case "x" =>
+                data.put("kid", Array(dataParts(1).equalsIgnoreCase("kid").toString))
+              case _ =>
+            }
+          } else {
+            dataParts(0) match {
+              case "L" =>
+               data.put("actions", Array("login"))
+              case "l" =>
+                data.put("actions", Array("logout"))
+              case "q" =>
+                data.put("actions", Array("reviewedQueue"))
+              case "v" =>
+                data.put("actions", Array("verifiedPassword"))
+                data.put("kid", Array(false.toString))
+              case _ =>
+            }
+          }
+          JacksMapper.writeValueAsString(data)
+        }
+
+
+        (keyParts(0) + ":" + keyParts(2), (keyParts(1).toLong, keyParts(1).toLong, parseData))
       }).reduceByKey( (v1, v2) => {
         val min = Math.min(v1._1, v2._1)
         val max = Math.max(v1._2, v2._2)
 
-        (min, max, v1._3 + ";" + v2._3)
+        val data1 = JacksMapper.readValue[Map[String, Array[String]]](v1._3)
+        val data2 = JacksMapper.readValue[Map[String, Array[String]]](v2._3)
+
+        (min, max, JacksMapper.writeValueAsString(merge(Seq(data1, data2)){ (_, v1, v2) => v1 ++ v2 }))
       }).take(1000).foreach(println)
     sc.stop()
   }
