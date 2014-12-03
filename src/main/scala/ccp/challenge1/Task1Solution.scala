@@ -142,10 +142,7 @@ object Task1Solution {
     //      .reduceByKey(_ + _).sortByKey().foreach(println)
 
     // 1. Clean data
-    lines.flatMap(cleanData).saveAsTextFile(workDir + "/cleaned")
-
-    val cleaned = sc.textFile(workDir + "/cleaned/part-00000")
-      .map({ line =>
+    lines.flatMap(cleanData).map({ line =>
         val parts = line.split("\t")
         val keyParts = parts(0).split(",")
 
@@ -202,7 +199,6 @@ object Task1Solution {
           JacksMapper.writeValueAsString(data)
         }
 
-
         (keyParts(0) + ":" + keyParts(2), (keyParts(1).toLong, keyParts(1).toLong, parseData))
       }).reduceByKey( (v1, v2) => {
         val min = Math.min(v1._1, v2._1)
@@ -212,7 +208,7 @@ object Task1Solution {
         val data2 = JacksMapper.readValue[Map[String, Array[String]]](v2._3)
 
         (min, max, JacksMapper.writeValueAsString(merge(Seq(data1, data2)){ (_, v1, v2) => v1 ++ v2 }))
-      }).take(1000).foreach(println)
+      }).saveAsTextFile(workDir + "/cleaned")
     sc.stop()
   }
 }
