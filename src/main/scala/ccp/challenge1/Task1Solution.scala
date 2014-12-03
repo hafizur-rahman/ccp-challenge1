@@ -37,48 +37,50 @@ object Task1Solution {
     val timestamp = formatter.parse(data.get(createdAtKey).get.asInstanceOf[String])
     val key = "%s,%10d,%s".format(userId, timestamp.getTime, sessionId)
 
-    var seq: Seq[String] = Seq()
-
     val pageType = data.get("type").get
     val payload = data.getOrElse("payload", Map[String, Object]()).asInstanceOf[Map[String, Object]]
 
     pageType match {
       case "Account" =>
         if (payload.get("subAction").get.asInstanceOf[String] == "parentalControls") {
-          seq = seq :+ "%s\tx:%s".format(key, payload.get("new").get)
+          Some("%s\tx:%s".format(key, payload.get("new").get))
         } else {
-          seq = seq :+ "%s\tc:%s".format(key, payload.get("subAction").get)
+          Some("%s\tc:%s".format(key, payload.get("subAction").get))
         }
       case "AddToQueue" =>
-        seq = seq :+ "%s\ta:%s".format(key, payload.getOrElse(itemIdKey,""))
+        Some("%s\ta:%s".format(key, payload.getOrElse(itemIdKey,"")))
       case "Home" =>
-        seq = seq :+ "%s\tP:%s".format(key, payload.getOrElse("popular",""))
-        seq = seq :+ "%s\tR:%s".format(key, payload.getOrElse("recommended",""))
-        seq = seq :+ "%s\tr:%s".format(key, payload.getOrElse("recent",""))
+        Some("%s\tP:%s".format(key, payload.getOrElse("popular","")))
+        Some("%s\tR:%s".format(key, payload.getOrElse("recommended","")))
+        Some("%s\tr:%s".format(key, payload.getOrElse("recent","")))
       case "Hover" =>
-        seq = seq :+ "%s\th:%s".format(key, payload.getOrElse(itemIdKey,""))
+        Some("%s\th:%s".format(key, payload.getOrElse(itemIdKey,"")))
       case "ItemPage" =>
-        seq = seq :+ "%s\ti:%s".format(key, payload.getOrElse(itemIdKey,""))
+        Some("%s\ti:%s".format(key, payload.getOrElse(itemIdKey,"")))
       case "Login" =>
-        seq = seq :+ "%s\tL:".format(key)
+        Some("%s\tL:".format(key))
       case "Logout" =>
-        seq = seq :+ "%s\tl:".format(key)
+        Some("%s\tl:".format(key))
       case "Play" | "Pause" | "Position" | "Stop" | "Advance" | "Resume" =>
-        seq = seq :+ "%s\tp:%s,%s".format(key, payload.getOrElse("marker",""), payload.getOrElse(itemIdKey,""))
+        if (payload.nonEmpty)
+          Some("%s\tp:%s,%s".format(key, payload.getOrElse("marker",""), payload.getOrElse(itemIdKey,"")))
+        else
+          None
       case "Queue" =>
-        seq = seq :+ "%s\tq:".format(key)
+        Some("%s\tq:".format(key))
       case "Rate" =>
-        seq = seq :+ "%s\tt:%s,%s".format(key, payload.getOrElse(itemIdKey,""), payload.getOrElse("rating", ""))
+        Some("%s\tt:%s,%s".format(key, payload.getOrElse(itemIdKey,""), payload.getOrElse("rating", "")))
       case "Recommendations" =>
-        seq = seq :+ "%s\tC:%s".format(key, payload.getOrElse("recs",""))
+        Some("%s\tC:%s".format(key, payload.getOrElse("recs","")))
       case "Search" =>
-        seq = seq :+ "%s\tS:%s".format(key, payload.getOrElse("results",""))
+        Some("%s\tS:%s".format(key, payload.getOrElse("results","").asInstanceOf[List[String]].mkString(",")))
       case "VerifyPassword" =>
-        seq = seq :+ "%s\tv:".format(key)
+        Some("%s\tv:".format(key))
       case "WriteReview" =>
-        seq = seq :+ "%s\tw:%s,%s,%s".format(key, payload.getOrElse(itemIdKey,""), payload.getOrElse("rating",""), payload.getOrElse("length",""))
+        Some("%s\tw:%s,%s,%s".format(key, payload.getOrElse(itemIdKey,""), payload.getOrElse("rating",""), payload.getOrElse("length","")))
+      case _ =>
+        None
     }
-    seq
   }
 
   def parseLine(line: String): Seq[String] = {
@@ -99,12 +101,21 @@ object Task1Solution {
     seq
   }
 
+  case class Session(popular: Option[String] = None, recommended: Option[String] = None,
+                     searched: Option[String] = None, hover: Option[String] = None,
+                     queued: Option[String] = None, browsed: Option[String] = None,
+                     recommendations: Option[String] = None, recent: Option[String] = None,
+                     played: Option[String] = None, rated: Option[String] = None,
+                     reviewed: Option[String] = None, actions: Option[String] = None,
+                     kid: String = "kid", user: Option[String] = None,
+                     start: Option[Long] = None, end: Option[Long] = None)
+
   def main(args: Array[String]) = {
     val conf = new SparkConf().setMaster("local[4]").setAppName("Spark Demo")
     val sc = new SparkContext(conf)
 
     val path = args(0)
-    val writeTo = args(1)
+    val workDir = args(1)
     val lines = sc.textFile(path)
 
     // 0. Explore data
@@ -113,8 +124,20 @@ object Task1Solution {
     //      .reduceByKey(_ + _).sortByKey().foreach(println)
 
     // 1. Clean data
-    lines.flatMap(cleanData).saveAsTextFile(writeTo)
+//    lines.flatMap(cleanData).saveAsTextFile(workDir + "/cleaned")
 
+    val cleaned = sc.textFile(workDir + "/cleaned/part-00000")
+      .map({ line =>
+        val parts = line.split("\t")
+        val keyParts = parts(0).split(",")
+
+        (keyParts(0) + ":" + keyParts(2), (keyParts(1).toLong, keyParts(1).toLong, parts(1)))
+      }).reduceByKey( (v1, v2) => {
+        val min = Math.min(v1._1, v2._1)
+        val max = Math.max(v1._2, v2._2)
+
+        (min, max, v1._3 + ";" + v2._3)
+      }).take(1000).foreach(println)
     sc.stop()
   }
 }
