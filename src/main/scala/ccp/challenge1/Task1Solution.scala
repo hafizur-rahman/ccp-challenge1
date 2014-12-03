@@ -70,7 +70,7 @@ object Task1Solution {
         Some("%s\tl:".format(key))
       case "Play" | "Pause" | "Position" | "Stop" | "Advance" | "Resume" =>
         if (payload.nonEmpty)
-          Some("%s\tp:%s,%s".format(key, payload.getOrElse("marker",""), payload.getOrElse(itemIdKey,"")))
+          Some("%s\tp:%s,%s".format(key, payload.getOrElse(itemIdKey,""), payload.getOrElse("marker","")))
         else
           None
       case "Queue" =>
