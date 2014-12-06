@@ -205,7 +205,7 @@ object Task1Solution {
         val data1 = JacksMapper.readValue[Map[String, Any]](v1)
         val data2 = JacksMapper.readValue[Map[String, Any]](v2)
 
-        JacksMapper.writeValueAsString(merge(Seq(data1, data2)){ (k, v1, v2) =>
+        val merged = merge(Seq(data1, data2)){ (k, v1, v2) =>
           k match {
             case "user" =>
               v1
@@ -228,7 +228,9 @@ object Task1Solution {
                   l1 ++ l2
               }
           }
-        })
+        }
+
+        JacksMapper.writeValueAsString(merged)
       }).map({ i => i._2})
       .saveAsTextFile(workDir + "/cleaned")
 
