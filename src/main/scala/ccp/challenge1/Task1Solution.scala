@@ -207,7 +207,7 @@ object Task1Solution {
 
         val merged = merge(Seq(data1, data2)){ (k, v1, v2) =>
           k match {
-            case "user" =>
+            case "user" | "sessionId" =>
               v1
             case "start" =>
               Math.min(v1.asInstanceOf[Long], v2.asInstanceOf[Long])
