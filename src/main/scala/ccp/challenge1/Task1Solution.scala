@@ -119,15 +119,6 @@ object Task1Solution {
     }
   }
 
-  case class Session(popular: Option[String] = None, recommended: Option[String] = None,
-                     searched: Option[String] = None, hover: Option[String] = None,
-                     queued: Option[String] = None, browsed: Option[String] = None,
-                     recommendations: Option[String] = None, recent: Option[String] = None,
-                     played: Option[String] = None, rated: Option[String] = None,
-                     reviewed: Option[String] = None, actions: Option[String] = None,
-                     kid: String = "kid", user: Option[String] = None,
-                     start: Option[Long] = None, end: Option[Long] = None)
-
   def main(args: Array[String]) = {
     val conf = new SparkConf().setMaster("local[4]").setAppName("Spark Demo")
     val sc = new SparkContext(conf)
@@ -147,8 +138,12 @@ object Task1Solution {
         val keyParts = parts(0).split(",")
 
         val parseData = {
-          val data = mutable.HashMap[String, Seq[String]]()
+          val data = mutable.HashMap[String, Any]()
           val dataParts = parts(1).split(":")
+
+          data.put("user", keyParts(0))
+          data.put("start", keyParts(1).toLong)
+          data.put("sessionId", keyParts(2))
 
           if (dataParts.length > 1) {
             val items = dataParts(1).split(",")
@@ -162,7 +157,9 @@ object Task1Solution {
               case "S" =>
                 data.put("searched", items.toSeq)
               case "p" =>
-                data.put("played", Array(items.mkString(":")))
+                val movies = mutable.HashMap[String, Integer]()
+                movies.put(items(0), items(1).toInt)
+                data.put("played", movies)
               case "a" =>
                 data.put("queued", items.toSeq)
               case "c" =>
@@ -179,7 +176,11 @@ object Task1Solution {
               case "w" =>
                 data.put("reviewed", Array(items.mkString(":")))
               case "x" =>
-                data.put("kid", Array(dataParts(1).equalsIgnoreCase("kid").toString))
+                val isKid: Boolean = dataParts(1).equalsIgnoreCase("kid")
+                data.put("kid", Array(isKid.toString))
+
+                if (isKid)
+                  data.put("end", keyParts(1).toLong)
               case _ =>
             }
           } else {
@@ -199,16 +200,38 @@ object Task1Solution {
           JacksMapper.writeValueAsString(data)
         }
 
-        (keyParts(0) + ":" + keyParts(2), (keyParts(1).toLong, keyParts(1).toLong, parseData))
+        (keyParts(2), parseData)
       }).reduceByKey( (v1, v2) => {
-        val min = Math.min(v1._1, v2._1)
-        val max = Math.max(v1._2, v2._2)
+        val data1 = JacksMapper.readValue[Map[String, Any]](v1)
+        val data2 = JacksMapper.readValue[Map[String, Any]](v2)
 
-        val data1 = JacksMapper.readValue[Map[String, Array[String]]](v1._3)
-        val data2 = JacksMapper.readValue[Map[String, Array[String]]](v2._3)
+        JacksMapper.writeValueAsString(merge(Seq(data1, data2)){ (k, v1, v2) =>
+          k match {
+            case "user" =>
+              v1
+            case "start" =>
+              Math.min(v1.asInstanceOf[Long], v2.asInstanceOf[Long])
+            case "played" =>
+              (v1, v2) match {
+                case (m1: Map[String, Integer], m2: Map[String, Integer]) =>
+                  merge(Seq(m1, m2)) { (_, t1, t2) =>
+                    Math.max(t1, t2)
+                  }
+                case (t1: Integer, t2: Integer) =>
+                  Math.max(t1, t2)
+              }
+            case _ =>
+              (v1, v2) match {
+                case (m1: Map[String, Array[String]], m2: Map[String, Array[String]]) =>
+                  m1 ++ m2
+                case (l1: List[String], l2: List[String]) =>
+                  l1 ++ l2
+              }
+          }
+        })
+      }).map({ i => i._2})
+      .saveAsTextFile(workDir + "/cleaned")
 
-        (min, max, JacksMapper.writeValueAsString(merge(Seq(data1, data2)){ (_, v1, v2) => v1 ++ v2 }))
-      }).saveAsTextFile(workDir + "/cleaned")
     sc.stop()
   }
 }
