@@ -17,7 +17,7 @@ object Sentiment {
 
     val vNegTerms = sentiments.filter(item => item._2 == -5 || item._2 == -4)
     val negTerms = sentiments.filter(item => item._2 == -3 || item._2 == -2 || item._2 == -1) ::
-      List(, "second-rate", "moronic", "third-rate", "flawed", "juvenile", "boring", "distasteful", "ordinary", "disgusting", "senseless", "static", "brutal", "confused", "disappointing", "bloody", "silly", "tired", "predictable", "stupid", "uninteresting", "trite", "uneven", "outdated", "dreadful", "bland")
+      List( "second-rate", "moronic", "third-rate", "flawed", "juvenile", "boring", "distasteful", "ordinary", "disgusting", "senseless", "static", "brutal", "confused", "disappointing", "bloody", "silly", "tired", "predictable", "stupid", "uninteresting", "trite", "uneven", "outdated", "dreadful", "bland")
     val posTerms = sentiments.filter(item => item._2 == 3 || item._2 == 2 || item._2 == 1) ::
       List("first-rate", "insightful", "clever", "charming", "comical", "charismatic", "enjoyable", "absorbing", "sensitive", "intriguing", "powerful", "pleasant", "surprising", "thought-provoking", "imaginative", "unpretentious")
     val vPosTerms = sentiments.filter(item => item._2 == 4 || item._2 == 5) ::
