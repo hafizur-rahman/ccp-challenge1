@@ -2,7 +2,7 @@
   "paragraphs": [
     {
       "text": "%md ### Spark Streaming Demo\n\nRun the following command in a console and send messages periodically.\nnc -l localhost 7777",
-      "dateUpdated": "Aug 27, 2015 12:33:38 AM",
+      "dateUpdated": "Aug 27, 2015 12:36:56 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -14,7 +14,7 @@
           "groups": [],
           "scatter": {}
         },
-        "editorHide": false
+        "editorHide": true
       },
       "settings": {
         "params": {},
