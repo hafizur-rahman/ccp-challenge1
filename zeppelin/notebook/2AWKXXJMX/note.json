@@ -1,8 +1,8 @@
 {
   "paragraphs": [
     {
-      "text": "%md ### Spark Streaming Demo\n\nRun the following command in a console\nnc -l localhost 7777",
-      "dateUpdated": "Aug 27, 2015 12:03:24 AM",
+      "text": "%md ### Spark Streaming Demo\n\nRun the following command in a console and send messages periodically.\nnc -l localhost 7777",
+      "dateUpdated": "Aug 27, 2015 12:33:38 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -14,7 +14,7 @@
           "groups": [],
           "scatter": {}
         },
-        "editorHide": true
+        "editorHide": false
       },
       "settings": {
         "params": {},
@@ -25,11 +25,11 @@
       "result": {
         "code": "SUCCESS",
         "type": "HTML",
-        "msg": "\u003ch3\u003eSpark Streaming Demo\u003c/h3\u003e\n\u003cp\u003eRun the following command in a console\n\u003cbr  /\u003enc -l localhost 7777\u003c/p\u003e\n"
+        "msg": "\u003ch3\u003eSpark Streaming Demo\u003c/h3\u003e\n\u003cp\u003eRun the following command in a console and send messages periodically.\n\u003cbr  /\u003enc -l localhost 7777\u003c/p\u003e\n"
       },
       "dateCreated": "Aug 27, 2015 12:02:04 AM",
-      "dateStarted": "Aug 27, 2015 12:03:19 AM",
-      "dateFinished": "Aug 27, 2015 12:03:19 AM",
+      "dateStarted": "Aug 27, 2015 12:33:38 AM",
+      "dateFinished": "Aug 27, 2015 12:33:38 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
@@ -179,9 +179,43 @@
       "progressUpdateIntervalMs": 500
     },
     {
+      "text": "%md\n### Send messages at nc terminal",
+      "dateUpdated": "Aug 27, 2015 12:35:00 AM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "tableHide": false,
+        "editorHide": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440603230840_2129320677",
+      "id": "20150827-003350_1858272822",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch3\u003eSend messages at nc terminal\u003c/h3\u003e\n"
+      },
+      "dateCreated": "Aug 27, 2015 12:33:50 AM",
+      "dateStarted": "Aug 27, 2015 12:34:55 AM",
+      "dateFinished": "Aug 27, 2015 12:34:55 AM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
       "title": "Query temp Table using sqlContext",
       "text": "val data \u003d sqlContext.sql(\"select * from message\")\ndata.foreach(println)",
-      "dateUpdated": "Aug 27, 2015 12:00:44 AM",
+      "dateUpdated": "Aug 27, 2015 12:34:37 AM",
       "config": {
         "colWidth": 12.0,
         "graph": {
@@ -194,7 +228,8 @@
           "scatter": {}
         },
         "tableHide": true,
-        "title": true
+        "title": true,
+        "editorHide": false
       },
       "settings": {
         "params": {},
@@ -205,11 +240,11 @@
       "result": {
         "code": "SUCCESS",
         "type": "TEXT",
-        "msg": "-------------------------------------------\nTime: 1440600592000 ms\n-------------------------------------------\ntest\nme\n\ndata: org.apache.spark.sql.DataFrame \u003d [createdAt: bigint, text: string]\n"
+        "msg": "data: org.apache.spark.sql.DataFrame \u003d [createdAt: bigint, text: string]\n-------------------------------------------\nTime: 1440603254000 ms\n-------------------------------------------\n\n"
       },
       "dateCreated": "Aug 26, 2015 11:38:23 PM",
-      "dateStarted": "Aug 26, 2015 11:49:51 PM",
-      "dateFinished": "Aug 26, 2015 11:49:52 PM",
+      "dateStarted": "Aug 27, 2015 12:34:13 AM",
+      "dateFinished": "Aug 27, 2015 12:34:14 AM",
       "status": "FINISHED",
       "progressUpdateIntervalMs": 500
     },
