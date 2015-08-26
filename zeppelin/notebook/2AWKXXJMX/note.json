@@ -1,0 +1,322 @@
+{
+  "paragraphs": [
+    {
+      "text": "%md ### Spark Streaming Demo\n\nRun the following command in a console\nnc -l localhost 7777",
+      "dateUpdated": "Aug 27, 2015 12:03:24 AM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440601324489_-313928952",
+      "id": "20150827-000204_2000859239",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003ch3\u003eSpark Streaming Demo\u003c/h3\u003e\n\u003cp\u003eRun the following command in a console\n\u003cbr  /\u003enc -l localhost 7777\u003c/p\u003e\n"
+      },
+      "dateCreated": "Aug 27, 2015 12:02:04 AM",
+      "dateStarted": "Aug 27, 2015 12:03:19 AM",
+      "dateFinished": "Aug 27, 2015 12:03:19 AM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "",
+      "text": "%spark\n\nimport org.apache.spark.streaming._\nimport org.apache.spark.streaming.StreamingContext\nimport org.apache.spark.streaming.StreamingContext._\nimport org.apache.spark.streaming.dstream.DStream\nimport org.apache.spark.streaming.Duration\nimport org.apache.spark.streaming.Seconds\n\ncase class Message(createdAt:Long, text:String)",
+      "dateUpdated": "Aug 27, 2015 12:03:34 AM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": false,
+        "tableHide": true,
+        "title": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440596715268_945564400",
+      "id": "20150826-224515_2023915750",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.streaming._\nimport org.apache.spark.streaming.StreamingContext\nimport org.apache.spark.streaming.StreamingContext._\nimport org.apache.spark.streaming.dstream.DStream\nimport org.apache.spark.streaming.Duration\nimport org.apache.spark.streaming.Seconds\ndefined class Message\n"
+      },
+      "dateCreated": "Aug 26, 2015 10:45:15 PM",
+      "dateStarted": "Aug 26, 2015 11:46:03 PM",
+      "dateFinished": "Aug 26, 2015 11:46:22 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Initialize streaming Context",
+      "text": "val ssc \u003d new StreamingContext(sc, Seconds(1))",
+      "dateUpdated": "Aug 26, 2015 11:59:23 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": false,
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440596804250_-124868337",
+      "id": "20150826-224644_2004000802",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "ssc: org.apache.spark.streaming.StreamingContext \u003d org.apache.spark.streaming.StreamingContext@3e0ce8ac\n"
+      },
+      "dateCreated": "Aug 26, 2015 10:46:44 PM",
+      "dateStarted": "Aug 26, 2015 11:46:26 PM",
+      "dateFinished": "Aug 26, 2015 11:46:27 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Register temporary Table",
+      "text": "val lines \u003d ssc.socketTextStream(\"localhost\", 7777)\nval errorLines \u003d lines.window(Seconds(10))\nval message \u003d errorLines.map(status\u003d\u003e\n  Message(System.currentTimeMillis()/1000, status)\n).foreachRDD(rdd\u003d\u003e\n  rdd.toDF().registerTempTable(\"message\")\n)",
+      "dateUpdated": "Aug 26, 2015 11:58:51 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": false,
+        "tableHide": true,
+        "lineNumbers": false,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440596935567_-1000020487",
+      "id": "20150826-224855_1072053834",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "lines: org.apache.spark.streaming.dstream.ReceiverInputDStream[String] \u003d org.apache.spark.streaming.dstream.SocketInputDStream@2b8e557d\nerrorLines: org.apache.spark.streaming.dstream.DStream[String] \u003d org.apache.spark.streaming.dstream.WindowedDStream@7429eb0b\n"
+      },
+      "dateCreated": "Aug 26, 2015 10:48:55 PM",
+      "dateStarted": "Aug 26, 2015 11:46:37 PM",
+      "dateFinished": "Aug 26, 2015 11:46:38 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Start Streaming Context!",
+      "text": "errorLines.print\n\nssc.start()",
+      "dateUpdated": "Aug 26, 2015 11:59:47 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": false,
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440597057964_1226337507",
+      "id": "20150826-225057_1273689691",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": ""
+      },
+      "dateCreated": "Aug 26, 2015 10:50:57 PM",
+      "dateStarted": "Aug 26, 2015 11:46:47 PM",
+      "dateFinished": "Aug 26, 2015 11:46:47 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Query temp Table using sqlContext",
+      "text": "val data \u003d sqlContext.sql(\"select * from message\")\ndata.foreach(println)",
+      "dateUpdated": "Aug 27, 2015 12:00:44 AM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440599903099_-1600170764",
+      "id": "20150826-233823_58019349",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "-------------------------------------------\nTime: 1440600592000 ms\n-------------------------------------------\ntest\nme\n\ndata: org.apache.spark.sql.DataFrame \u003d [createdAt: bigint, text: string]\n"
+      },
+      "dateCreated": "Aug 26, 2015 11:38:23 PM",
+      "dateStarted": "Aug 26, 2015 11:49:51 PM",
+      "dateFinished": "Aug 26, 2015 11:49:52 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "title": "Query temp table using sql interpreter",
+      "text": "%sql \nselect * from message where text like \u0027%error%\u0027 limit 10",
+      "dateUpdated": "Aug 27, 2015 12:01:07 AM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [
+            {
+              "name": "createdAt",
+              "index": 0.0,
+              "aggr": "sum"
+            }
+          ],
+          "values": [
+            {
+              "name": "text",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          ],
+          "groups": [],
+          "scatter": {
+            "xAxis": {
+              "name": "createdAt",
+              "index": 0.0,
+              "aggr": "sum"
+            },
+            "yAxis": {
+              "name": "text",
+              "index": 1.0,
+              "aggr": "sum"
+            }
+          }
+        },
+        "editorHide": false,
+        "tableHide": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440597081389_1137860585",
+      "id": "20150826-225121_2006782623",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TABLE",
+        "msg": "createdAt\ttext\n1440601034\ttest error\n"
+      },
+      "dateCreated": "Aug 26, 2015 10:51:21 PM",
+      "dateStarted": "Aug 26, 2015 11:57:14 PM",
+      "dateFinished": "Aug 26, 2015 11:57:14 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "dateUpdated": "Aug 26, 2015 11:51:14 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "tableHide": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440597587776_-1996383866",
+      "id": "20150826-225947_1004051219",
+      "dateCreated": "Aug 26, 2015 10:59:47 PM",
+      "status": "READY",
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "Spark Certification - 1",
+  "id": "2AWKXXJMX",
+  "angularObjects": {
+    "2AY399YCC": [],
+    "2AX9S6SAV": [],
+    "2AXVDVGG9": [],
+    "2AXVEDB3G": [],
+    "2AY8BC1TF": [],
+    "2AYBBX7V9": [],
+    "2AW8BPRAY": [],
+    "2AYCJ54X5": [],
+    "2AWZ63A69": [],
+    "2AWR5K9WX": [],
+    "2AVX8XD4T": [],
+    "2AZMBECFF": [],
+    "2AX5AE85Y": []
+  },
+  "config": {
+    "looknfeel": "default"
+  },
+  "info": {}
+}
