@@ -1,0 +1,324 @@
+{
+  "paragraphs": [
+    {
+      "text": "%md\nCourtesy: http://nbviewer.ipython.org/github/ofermend/IPython-notebooks/blob/master/blog-part-2.ipynb",
+      "dateUpdated": "Aug 28, 2015 10:30:07 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        },
+        "editorHide": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440768588036_334877096",
+      "id": "20150828-222948_722077295",
+      "result": {
+        "code": "SUCCESS",
+        "type": "HTML",
+        "msg": "\u003cp\u003eCourtesy: http://nbviewer.ipython.org/github/ofermend/IPython-notebooks/blob/master/blog-part-2.ipynb\u003c/p\u003e\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:29:48 PM",
+      "dateStarted": "Aug 28, 2015 10:30:03 PM",
+      "dateFinished": "Aug 28, 2015 10:30:04 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark\n\nimport org.apache.spark.rdd._\nimport scala.collection.JavaConverters._\nimport au.com.bytecode.opencsv.CSVReader\n\nimport java.io._\nimport java.time._\nimport java.time.format._",
+      "dateUpdated": "Aug 28, 2015 10:08:38 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440687053245_361752019",
+      "id": "20150827-235053_2073309158",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.rdd._\nimport scala.collection.JavaConverters._\nimport au.com.bytecode.opencsv.CSVReader\nimport java.io._\nimport java.time._\nimport java.time.format._\n"
+      },
+      "dateCreated": "Aug 27, 2015 11:50:53 PM",
+      "dateStarted": "Aug 28, 2015 10:08:38 PM",
+      "dateFinished": "Aug 28, 2015 10:08:42 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "case class DelayRec(year: String,\n                    month: String,\n                    dayOfMonth: String,\n                    dayOfWeek: String,\n                    crsDepTime: String,\n                    depDelay: String,\n                    origin: String,\n                    distance: String,\n                    cancelled: String) {\n\n    val holidays \u003d List(\"01/01/2007\", \"01/15/2007\", \"02/19/2007\", \"05/28/2007\", \"06/07/2007\", \"07/04/2007\",\n      \"09/03/2007\", \"10/08/2007\" ,\"11/11/2007\", \"11/22/2007\", \"12/25/2007\",\n      \"01/01/2008\", \"01/21/2008\", \"02/18/2008\", \"05/22/2008\", \"05/26/2008\", \"07/04/2008\",\n      \"09/01/2008\", \"10/13/2008\" ,\"11/11/2008\", \"11/27/2008\", \"12/25/2008\")\n\n    def gen_features: (String, Array[Double]) \u003d {\n      val values \u003d Array(\n        depDelay.toDouble,\n        month.toDouble,\n        dayOfMonth.toDouble,\n        dayOfWeek.toDouble,\n        get_hour(crsDepTime).toDouble,\n        distance.toDouble,\n        days_from_nearest_holiday(year.toInt, month.toInt, dayOfMonth.toInt)\n      )\n      new Tuple2(to_date(year.toInt, month.toInt, dayOfMonth.toInt), values)\n    }\n\n    def get_hour(depTime: String) : String \u003d \"%04d\".format(depTime.toInt).take(2)\n    def to_date(year: Int, month: Int, day: Int) \u003d \"%04d%02d%02d\".format(year, month, day)\n\n    def days_from_nearest_holiday(year:Int, month:Int, day:Int): Int \u003d {\n      val sampleDate \u003d java.time.LocalDate.of(year, month, day)\n      val pattern \u003d java.time.format.DateTimeFormatter.ofPattern(\"MM/dd/yyyy\")\n\n      holidays.foldLeft(3000) { (r, c) \u003d\u003e\n        val holiday \u003d java.time.LocalDate.parse(c, pattern)\n        val distance \u003d Math.abs(java.time.Period.between(holiday, sampleDate).getDays)\n        math.min(r, distance)\n      }\n    }\n  }\n\n// function to do a preprocessing step for a given file\ndef prepFlightDelays(infile: String): RDD[DelayRec] \u003d {\n    val data \u003d sc.textFile(infile)\n\n    data.map { line \u003d\u003e\n      val reader \u003d new CSVReader(new StringReader(line))\n      reader.readAll().asScala.toList.map(rec \u003d\u003e DelayRec(rec(0),rec(1),rec(2),rec(3),rec(5),rec(15),rec(16),rec(18),rec(21)))\n    }.map(list \u003d\u003e list(0))\n    .filter(rec \u003d\u003e rec.year !\u003d \"Year\")\n    .filter(rec \u003d\u003e rec.cancelled \u003d\u003d \"0\")\n    .filter(rec \u003d\u003e rec.origin \u003d\u003d \"ORD\")\n}\n\nval data_2007 \u003d prepFlightDelays(\"file:///Users/bibagimon/spark-data/2007.csv\").map(rec \u003d\u003e rec.gen_features._2)\nval data_2008 \u003d prepFlightDelays(\"file:///Users/bibagimon/spark-data/2008.csv\").map(rec \u003d\u003e rec.gen_features._2)\ndata_2007.take(5).map(x \u003d\u003e x mkString \",\").foreach(println)",
+      "dateUpdated": "Aug 28, 2015 10:08:53 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440686611737_-23045022",
+      "id": "20150827-234331_1660521564",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "defined class DelayRec\nprepFlightDelays: (infile: String)org.apache.spark.rdd.RDD[DelayRec]\ndata_2007: org.apache.spark.rdd.RDD[Array[Double]] \u003d MapPartitionsRDD[7] at map at \u003cconsole\u003e:47\ndata_2008: org.apache.spark.rdd.RDD[Array[Double]] \u003d MapPartitionsRDD[15] at map at \u003cconsole\u003e:46\n-8.0,1.0,25.0,4.0,11.0,719.0,0.0\n41.0,1.0,28.0,7.0,15.0,925.0,0.0\n45.0,1.0,29.0,1.0,20.0,316.0,3.0\n-9.0,1.0,17.0,3.0,19.0,719.0,1.0\n180.0,1.0,12.0,5.0,17.0,316.0,1.0\n"
+      },
+      "dateCreated": "Aug 27, 2015 11:43:31 PM",
+      "dateStarted": "Aug 28, 2015 10:08:53 PM",
+      "dateFinished": "Aug 28, 2015 10:09:00 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "import org.apache.spark.mllib.regression.LabeledPoint\nimport org.apache.spark.mllib.linalg.Vectors\nimport org.apache.spark.mllib.feature.StandardScaler",
+      "dateUpdated": "Aug 28, 2015 10:08:02 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440686645395_-617805525",
+      "id": "20150827-234405_1932343239",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.mllib.regression.LabeledPoint\nimport org.apache.spark.mllib.linalg.Vectors\nimport org.apache.spark.mllib.feature.StandardScaler\n"
+      },
+      "dateCreated": "Aug 27, 2015 11:44:05 PM",
+      "dateStarted": "Aug 28, 2015 10:08:02 PM",
+      "dateFinished": "Aug 28, 2015 10:08:21 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "def parseData(vals: Array[Double]): LabeledPoint \u003d {\n  LabeledPoint(if (vals(0)\u003e\u003d15) 1.0 else 0.0, Vectors.dense(vals.drop(1)))\n}\n\n// Prepare training set\nval parsedTrainData \u003d data_2007.map(parseData)\nparsedTrainData.cache\nval scaler \u003d new StandardScaler(withMean \u003d true, withStd \u003d true).fit(parsedTrainData.map(x \u003d\u003e x.features))\nval scaledTrainData \u003d parsedTrainData.map(x \u003d\u003e LabeledPoint(x.label, scaler.transform(Vectors.dense(x.features.toArray))))\nscaledTrainData.cache\n\n// Prepare test/validation set\nval parsedTestData \u003d data_2008.map(parseData)\nparsedTestData.cache\nval scaledTestData \u003d parsedTestData.map(x \u003d\u003e LabeledPoint(x.label, scaler.transform(Vectors.dense(x.features.toArray))))\nscaledTestData.cache\n\nscaledTrainData.take(3).map(x \u003d\u003e (x.label, x.features)).foreach(println)",
+      "dateUpdated": "Aug 28, 2015 10:09:14 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767282715_615844484",
+      "id": "20150828-220802_464500742",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "parseData: (vals: Array[Double])org.apache.spark.mllib.regression.LabeledPoint\nparsedTrainData: org.apache.spark.rdd.RDD[org.apache.spark.mllib.regression.LabeledPoint] \u003d MapPartitionsRDD[16] at map at \u003cconsole\u003e:52\nres13: parsedTrainData.type \u003d MapPartitionsRDD[16] at map at \u003cconsole\u003e:52\nscaler: org.apache.spark.mllib.feature.StandardScalerModel \u003d org.apache.spark.mllib.feature.StandardScalerModel@43d501fb\nscaledTrainData: org.apache.spark.rdd.RDD[org.apache.spark.mllib.regression.LabeledPoint] \u003d MapPartitionsRDD[22] at map at \u003cconsole\u003e:54\nres14: scaledTrainData.type \u003d MapPartitionsRDD[22] at map at \u003cconsole\u003e:54\nparsedTestData: org.apache.spark.rdd.RDD[org.apache.spark.mllib.regression.LabeledPoint] \u003d MapPartitionsRDD[23] at map at \u003cconsole\u003e:52\nres17: parsedTestData.type \u003d MapPartitionsRDD[23] at map at \u003cconsole\u003e:52\nscaledTestData: org.apache.spark.rdd.RDD[org.apache.spark.mllib.regression.LabeledPoint] \u003d MapPartitionsRDD[24] at map at \u003cconsole\u003e:58\nres18: scaledTestData.type \u003d MapPartitionsRDD[24] at map at \u003cconsole\u003e:58\n(0.0,[-1.6160463330366615,1.0549272994665975,0.03217026353736768,-0.5189244175441254,0.03408393342431729,-0.7651980003510508])\n(1.0,[-1.6160463330366615,1.3961052168540307,1.535430775847561,0.36243209841210194,0.4316551188434437,-0.7651980003510508])\n(1.0,[-1.6160463330366615,1.5098311893165084,-1.4710902487728257,1.4641277433573863,-0.7436888225169834,2.586139889863519])\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:08:02 PM",
+      "dateStarted": "Aug 28, 2015 10:09:14 PM",
+      "dateFinished": "Aug 28, 2015 10:09:37 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "// Function to compute evaluation metrics\ndef eval_metrics(labelsAndPreds: RDD[(Double, Double)]) : Tuple2[Array[Double], Array[Double]] \u003d {\n    val tp \u003d labelsAndPreds.filter(r \u003d\u003e r._1\u003d\u003d1 \u0026\u0026 r._2\u003d\u003d1).count.toDouble\n    val tn \u003d labelsAndPreds.filter(r \u003d\u003e r._1\u003d\u003d0 \u0026\u0026 r._2\u003d\u003d0).count.toDouble\n    val fp \u003d labelsAndPreds.filter(r \u003d\u003e r._1\u003d\u003d1 \u0026\u0026 r._2\u003d\u003d0).count.toDouble\n    val fn \u003d labelsAndPreds.filter(r \u003d\u003e r._1\u003d\u003d0 \u0026\u0026 r._2\u003d\u003d1).count.toDouble\n\n    val precision \u003d tp / (tp+fp)\n    val recall \u003d tp / (tp+fn)\n    val F_measure \u003d 2*precision*recall / (precision+recall)\n    val accuracy \u003d (tp+tn) / (tp+tn+fp+fn)\n    new Tuple2(Array(tp, tn, fp, fn), Array(precision, recall, F_measure, accuracy))\n}",
+      "dateUpdated": "Aug 28, 2015 10:11:12 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767308763_1055258377",
+      "id": "20150828-220828_1721498386",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "eval_metrics: (labelsAndPreds: org.apache.spark.rdd.RDD[(Double, Double)])(Array[Double], Array[Double])\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:08:28 PM",
+      "dateStarted": "Aug 28, 2015 10:11:12 PM",
+      "dateFinished": "Aug 28, 2015 10:11:12 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "import org.apache.spark.mllib.classification.LogisticRegressionWithSGD\n\n// Build the Logistic Regression model\nval model_lr \u003d LogisticRegressionWithSGD.train(scaledTrainData, numIterations\u003d100)\n\n// Predict\nval labelsAndPreds_lr \u003d scaledTestData.map { point \u003d\u003e\n    val pred \u003d model_lr.predict(point.features)\n    (pred, point.label)\n}\nval m_lr \u003d eval_metrics(labelsAndPreds_lr)._2\nprintln(\"precision \u003d %.2f, recall \u003d %.2f, F1 \u003d %.2f, accuracy \u003d %.2f\".format(m_lr(0), m_lr(1), m_lr(2), m_lr(3)))",
+      "dateUpdated": "Aug 28, 2015 10:11:26 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767472014_437213726",
+      "id": "20150828-221112_176084909",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.mllib.classification.LogisticRegressionWithSGD\nmodel_lr: org.apache.spark.mllib.classification.LogisticRegressionModel \u003d org.apache.spark.mllib.classification.LogisticRegressionModel: intercept \u003d 0.0, numFeatures \u003d 6, numClasses \u003d 2, threshold \u003d 0.5\nlabelsAndPreds_lr: org.apache.spark.rdd.RDD[(Double, Double)] \u003d MapPartitionsRDD[528] at map at \u003cconsole\u003e:67\nm_lr: Array[Double] \u003d Array(0.37346106214030744, 0.6445995221928832, 0.47292435424354246, 0.5910774460978737)\nprecision \u003d 0.37, recall \u003d 0.64, F1 \u003d 0.47, accuracy \u003d 0.59\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:11:12 PM",
+      "dateStarted": "Aug 28, 2015 10:11:26 PM",
+      "dateFinished": "Aug 28, 2015 10:11:55 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "import org.apache.spark.mllib.classification.SVMWithSGD\n\n// Build the SVM model\nval svmAlg \u003d new SVMWithSGD()\nsvmAlg.optimizer.setNumIterations(100)\n                .setRegParam(1.0)\n                .setStepSize(1.0)\nval model_svm \u003d svmAlg.run(scaledTrainData)\n\n// Predict\nval labelsAndPreds_svm \u003d scaledTestData.map { point \u003d\u003e\n        val pred \u003d model_svm.predict(point.features)\n        (pred, point.label)\n}\nval m_svm \u003d eval_metrics(labelsAndPreds_svm)._2\nprintln(\"precision \u003d %.2f, recall \u003d %.2f, F1 \u003d %.2f, accuracy \u003d %.2f\".format(m_svm(0), m_svm(1), m_svm(2), m_svm(3)))",
+      "dateUpdated": "Aug 28, 2015 10:12:21 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767486789_556717392",
+      "id": "20150828-221126_1393106228",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.mllib.classification.SVMWithSGD\nsvmAlg: org.apache.spark.mllib.classification.SVMWithSGD \u003d org.apache.spark.mllib.classification.SVMWithSGD@3e4ee28\nres32: svmAlg.optimizer.type \u003d org.apache.spark.mllib.optimization.GradientDescent@1c843cd1\nmodel_svm: org.apache.spark.mllib.classification.SVMModel \u003d org.apache.spark.mllib.classification.SVMModel: intercept \u003d 0.0, numFeatures \u003d 6, numClasses \u003d 2, threshold \u003d 0.0\nlabelsAndPreds_svm: org.apache.spark.rdd.RDD[(Double, Double)] \u003d MapPartitionsRDD[1036] at map at \u003cconsole\u003e:70\nm_svm: Array[Double] \u003d Array(0.3738123263235812, 0.6455739972337483, 0.4734682271934342, 0.5913518027018161)\nprecision \u003d 0.37, recall \u003d 0.65, F1 \u003d 0.47, accuracy \u003d 0.59\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:11:26 PM",
+      "dateStarted": "Aug 28, 2015 10:12:21 PM",
+      "dateFinished": "Aug 28, 2015 10:12:30 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "import org.apache.spark.mllib.tree.DecisionTree\n\n// Build the Decision Tree model\nval numClasses \u003d 2\nval categoricalFeaturesInfo \u003d Map[Int, Int]()\nval impurity \u003d \"gini\"\nval maxDepth \u003d 10\nval maxBins \u003d 100\nval model_dt \u003d DecisionTree.trainClassifier(parsedTrainData, numClasses, categoricalFeaturesInfo, impurity, maxDepth, maxBins)\n\n// Predict\nval labelsAndPreds_dt \u003d parsedTestData.map { point \u003d\u003e\n    val pred \u003d model_dt.predict(point.features)\n    (pred, point.label)\n}\nval m_dt \u003d eval_metrics(labelsAndPreds_dt)._2\nprintln(\"precision \u003d %.2f, recall \u003d %.2f, F1 \u003d %.2f, accuracy \u003d %.2f\".format(m_dt(0), m_dt(1), m_dt(2), m_dt(3)))",
+      "dateUpdated": "Aug 28, 2015 10:12:49 PM",
+      "config": {
+        "colWidth": 12.0,
+        "graph": {
+          "mode": "table",
+          "height": 300.0,
+          "optionOpen": false,
+          "keys": [],
+          "values": [],
+          "groups": [],
+          "scatter": {}
+        }
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767541384_2104233308",
+      "id": "20150828-221221_1814338284",
+      "result": {
+        "code": "SUCCESS",
+        "type": "TEXT",
+        "msg": "import org.apache.spark.mllib.tree.DecisionTree\nnumClasses: Int \u003d 2\ncategoricalFeaturesInfo: scala.collection.immutable.Map[Int,Int] \u003d Map()\nimpurity: String \u003d gini\nmaxDepth: Int \u003d 10\nmaxBins: Int \u003d 100\nmodel_dt: org.apache.spark.mllib.tree.model.DecisionTreeModel \u003d DecisionTreeModel classifier of depth 10 with 1845 nodes\nlabelsAndPreds_dt: org.apache.spark.rdd.RDD[(Double, Double)] \u003d MapPartitionsRDD[1075] at map at \u003cconsole\u003e:73\nm_dt: Array[Double] \u003d Array(0.40818345991143656, 0.17289073305670816, 0.2428988878175167, 0.6932603703814153)\nprecision \u003d 0.41, recall \u003d 0.17, F1 \u003d 0.24, accuracy \u003d 0.69\n"
+      },
+      "dateCreated": "Aug 28, 2015 10:12:21 PM",
+      "dateStarted": "Aug 28, 2015 10:12:49 PM",
+      "dateFinished": "Aug 28, 2015 10:12:55 PM",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "jobName": "paragraph_1440767569994_-1553559162",
+      "id": "20150828-221249_309341272",
+      "dateCreated": "Aug 28, 2015 10:12:49 PM",
+      "status": "READY",
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "Airline Delay Prediction",
+  "id": "2AY68M5RW",
+  "angularObjects": {
+    "2AY399YCC": [],
+    "2AX9S6SAV": [],
+    "2AXVDVGG9": [],
+    "2AXVEDB3G": [],
+    "2AY8BC1TF": [],
+    "2AYBBX7V9": [],
+    "2AW8BPRAY": [],
+    "2AYCJ54X5": [],
+    "2AWZ63A69": [],
+    "2AWR5K9WX": [],
+    "2AVX8XD4T": [],
+    "2AZMBECFF": [],
+    "2AX5AE85Y": []
+  },
+  "config": {},
+  "info": {}
+}
